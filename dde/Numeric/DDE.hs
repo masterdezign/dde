@@ -39,7 +39,8 @@
   >
   > main = do
   >   let hStep = 0.001  -- Integration step
-  >       samplesPerDelay = round $ 1.0 / hStep
+  >       tauD = 1.0  -- Delay time
+  >       samplesPerDelay = round $ tauD / hStep
   >       delays = 8
   >       total = delays * samplesPerDelay
   >
