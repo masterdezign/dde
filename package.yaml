@@ -1,0 +1,47 @@
+name:                dde
+version:             0.0.0
+github:              "masterdezign/dde"
+license:             BSD3
+author:              "Bogdan Penkovsky"
+maintainer:          "dev () penkovsky dot com"
+copyright:           "Bogdan Penkovsky"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+synopsis:            Delay differential equations
+category:            Math
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/masterdezign/dde#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  mackey-glass:
+    main:                Main.hs
+    source-dirs:         examples/MackeyGlass
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - dde
+
+tests:
+  dde-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - dde
