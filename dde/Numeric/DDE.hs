@@ -5,10 +5,10 @@
 {-# LANGUAGE BangPatterns #-}
 module Numeric.DDE (
   -- * Integrators
-    integRk4
-  , integHeun2
-  , integ
+    integ
   , integ'
+  , integRk4_2D
+  , integHeun2_2D
   , Input (..)
   , State (..)
 
@@ -71,9 +71,9 @@ heun2 = Stepper1 _heun2
         ! xy_next = xy .+. (hStep / 2.0) *. (f1 .+. f2)
 
 -- | Generic integrator for DDEs with a single delay
-integ
+integ'
   :: (State -> (Double, Double) -> (Double, Double) -> State)
-  -- ^ A stepper function describing a DDE system
+  -- ^ Iterator describing a DDE system
   -> Int
   -- ^ Delay length in samples
   -> Int
@@ -85,7 +85,7 @@ integ
   -> (State, V.Vector Double)
   -- ^ Final state and recorded state of the first variable.
   -- The latter could be a Matrix if multiple variables are needed
-integ iterate1 len1 krecord total (!xy0, !hist0, !(Input input1)) = a
+integ' iter1 len1 krecord total (!xy0, !hist0, !(Input in1)) = a
   where
     a = unsafePerformIO $ do
       ! v <- VM.new (len1 + total)  -- Delay history
@@ -108,47 +108,53 @@ integ iterate1 len1 krecord total (!xy0, !hist0, !(Input input1)) = a
       | otherwise = do
         x_tau1 <- VM.unsafeRead v (i - len1)  -- Delayed element
         x_tau1' <- VM.unsafeRead v (i - len1 + 1)  -- The next one
-        let u1 = input1 V.! (i - len1)  -- Read two subsequent inputs
-            u1' = input1 V.! (i - len1 + 1)
-            !xy' = iterate1 xy (x_tau1, x_tau1') (u1, u1')
+        let u1 = in1 V.! (i - len1)  -- Read two subsequent inputs
+            u1' = in1 V.! (i - len1 + 1)
+            !xy' = iter1 xy (x_tau1, x_tau1') (u1, u1')
             !(State xy'1) = xy'
             !x' = xy'1 V.! 0  -- Read x(t) variable
         VM.unsafeWrite v i x'
         go v (i + 1) xy'
 
--- | Integrator for two-dimensional DDEs with zero
--- initial conditions that records the whole time trace $x(t)$.
-integ'
+-- | Generic integrator that records the whole time trace $x(t)$
+integ
   :: Stepper1
+  -> State  -- ^ Initial state x(t), y(t),...
+  -> V.Vector Double  -- ^ Initial history for the delayed variable
+  -> Int  -- ^ Delay length in samples
   -> Double
   -> RHS
-  -> Int  -- ^ Delay length in samples
   -> Input  -- ^ External forcing
   -> (State, V.Vector Double)
-integ' (Stepper1 stp) hStep rhs' len1 inp@(Input in1) = res
-  where ! state0 = State (V.replicate 2 0.0)
-        ! hist0 = V.replicate len1 0
-        -- Two subsequent inputs are needed for `rk4`, therefore subtract one
-        ! totalIters = V.length in1 - 1
-        -- Iterator implements Runge-Kutta schema
-        ! iterator = stp hStep rhs'
-        -- Record all the time trace
-        ! res = integ iterator len1 totalIters totalIters (state0, hist0, inp)
+integ (Stepper1 stp) state0 hist0 len1 hStep rhs' inp@(Input in1) = r
+  where
+    -- Two subsequent inputs are needed for `rk4` and `heun2`,
+    -- therefore subtract one
+    ! totalIters = V.length in1 - 1
+    ! iterator = stp hStep rhs'
+    -- Record all the time trace
+    ! r = integ' iterator len1 totalIters totalIters (state0, hist0, inp)
 
 -- | RK4 integrator shortcut for 2D DDEs with zero
 -- initial conditions
-integRk4 :: Double  -- ^ Integration time step
-         -> RHS  -- ^ A model
-         -> Int  -- ^ Delay length in samples
-         -> Input  -- ^ External forcing
-         -> (State, V.Vector Double)
-integRk4 = integ' rk4
+integRk4_2D :: Int  -- ^ Delay length in samples
+            -> Double  -- ^ Integration time step
+            -> RHS  -- ^ DDE model
+            -> Input  -- ^ External forcing
+            -> (State, V.Vector Double)
+integRk4_2D len1 = integ rk4 state0 hist0 len1
+  where
+    ! state0 = State (V.replicate 2 0.0)
+    ! hist0 = V.replicate len1 0
 
--- | Heun's 2nd order shortcut for 2D DDEs with zero
+-- | Shortcut for Heun's 2nd order 2D DDEs with zero
 -- initial conditions
-integHeun2 :: Double  -- ^ Integration time step
-           -> RHS  -- ^ A model
-           -> Int  -- ^ Delay length in samples
-           -> Input  -- ^ External forcing
-           -> (State, V.Vector Double)
-integHeun2 = integ' heun2
+integHeun2_2D :: Int  -- ^ Delay length in samples
+              ->  Double  -- ^ Integration time step
+              -> RHS  -- ^ DDE model
+              -> Input  -- ^ External forcing
+              -> (State, V.Vector Double)
+integHeun2_2D len1 = integ heun2 state0 hist0 len1
+  where
+    ! state0 = State (V.replicate 2 0.0)
+    ! hist0 = V.replicate len1 0

@@ -26,7 +26,7 @@ mgModel hStep totalIters = r
     stepper = let (Stepper1 _rk4) = rk4
               in _rk4 hStep rhs'
     -- Record all the time trace
-    (_, r) = integ stepper len1 totalIters totalIters (state0, hist0, inp)
+    (_, r) = integ' stepper len1 totalIters totalIters (state0, hist0, inp)
 
 -- | Comparison with the output.dat produced by:
 -- > $ xppaut -silent mg.ode
