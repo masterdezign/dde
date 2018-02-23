@@ -1,5 +1,52 @@
 {- |
-    = Delay differential equations (DDE)
+  = Delay differential equations (DDE)
+
+
+  == Example: Ikeda DDE
+
+  Below is a complete example simulating the Ikeda DDE defined as:
+  @tau * x(t)/dt = -x + beta * sin[x(t - tau_D)]@.
+
+  > import qualified Data.Vector.Storable as V
+  > import qualified Numeric.DDE as DDE
+  >
+  > ikedaRhs beta ((DDE.State xs), (DDE.Hist hs), _) = DDE.State $ V.fromList [x']
+  >   where
+  >     -- Ikeda DDE definition
+  >     x' = (-x + beta * (sin x_tauD)) / tau
+  >
+  >     -- Constants
+  >     tau = 0.01
+  >
+  >     -- Dynamical variable x(t)
+  >     x = V.head xs
+  >
+  >     -- Delay term x(t - tau_D)
+  >     x_tauD = V.head hs
+  >
+  > model beta hStep len1 totalIter = DDE.integ DDE.rk4 state0 hist0 len1 hStep (ikedaRhs beta) inp
+  >   where
+  >     -- Initial conditions:
+  >     -- dynamical state and delay history.
+  >     state0 = DDE.State $ V.fromList [pi/2]
+  >     hist0 = V.replicate len1 (pi/2)
+  >
+  >     -- Input is ignored in ikedaRhs
+  >     inp = DDE.Input $ V.replicate (totalIter + 1) 0
+  >
+  > -- Control parameter
+  > beta = 2.6
+  >
+  > main = do
+  >   let hStep = 0.001  -- Integration step
+  >       samplesPerDelay = round $ 1.0 / hStep
+  >       delays = 8
+  >       total = delays * samplesPerDelay
+  >
+  >   let (state1, trace) = model beta hStep samplesPerDelay total
+  >
+  >   mapM_ print $ V.toList trace
+
 -}
 
 {-# LANGUAGE BangPatterns #-}
@@ -11,6 +58,7 @@ module Numeric.DDE (
   , integHeun2_2D
   , Input (..)
   , State (..)
+  , HistorySnapshot (..)
 
   -- * Steppers
   , Stepper1 (..)
