@@ -165,14 +165,14 @@ integ' iter1 len1 krecord total (!xy0, !hist0, !(Input in1)) = a
         VM.unsafeWrite v i x'
         go v (i + 1) xy'
 
--- | Generic integrator that records the whole time trace $x(t)$
+-- | Generic integrator that records the whole time trace @x(t)@
 integ
   :: Stepper1
   -> State  -- ^ Initial state x(t), y(t),...
   -> V.Vector Double  -- ^ Initial history for the delayed variable
   -> Int  -- ^ Delay length in samples
-  -> Double
-  -> RHS
+  -> Double  -- ^ Integration step
+  -> RHS  -- ^ Derivative (DDE right-hand side)
   -> Input  -- ^ External forcing
   -> (State, V.Vector Double)
 integ (Stepper1 stp) state0 hist0 len1 hStep rhs' inp@(Input in1) = r

@@ -23,7 +23,7 @@ newtype InputSnapshot = Inp { _insnap :: Double }
 newtype Input = Input { _input :: V.Vector Double }
 
 -- | Contains only the required snapshot of history to make steppers (e.g. Heun) work.
--- There could be several delay variables (as in rc-analog)
+-- There could be several delay variables
 newtype HistorySnapshot = Hist { _histsnap :: V.Vector Double }
 
 -- | Stepper for DDEs with a single delay
