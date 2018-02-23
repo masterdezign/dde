@@ -20,9 +20,10 @@ description:         Please see the README on Github at <https://github.com/mast
 
 dependencies:
 - base >= 4.7 && < 5
+- vector
 
 library:
-  source-dirs: src
+  source-dirs: dde
 
 executables:
   mackey-glass:

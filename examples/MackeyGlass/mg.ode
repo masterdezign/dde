@@ -1,0 +1,20 @@
+# XPPAUT Mackey-Glass model
+# http://www.math.pitt.edu/~bard/xpp/xpp.html
+
+x'=beta*delay(x,tau)/(1 + delay(x,tau)^10)-gamma*x
+
+par tau=17
+par gamma=0.1
+par beta=0.2
+
+x(0)=0.2
+init x=0.2
+
+@ total=1000
+@ bounds=10000
+# Maximal delay buffer (in time units)
+@ delay=100
+@ dt=0.1
+@ trans=0
+@ maxstore=100000000
+done
