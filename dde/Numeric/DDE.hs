@@ -58,6 +58,7 @@ module Numeric.DDE (
   , integRk4_2D
   , integHeun2_2D
   , Input (..)
+  , InputSnapshot (..)
   , State (..)
   , HistorySnapshot (..)
 
