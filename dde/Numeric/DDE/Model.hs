@@ -31,7 +31,7 @@ data MackeyGlass =
 --
 -- \[
 -- \begin{aligned}
---   \tau * dx(t)/dt &= -x - y / theta + fnl[x(t - \tau_D) + \rho*u(t)] \\
+--   \tau dx(t)/dt &= -x - y / \theta + fnl[x(t - \tau_D) + \rho u(t)] \\
 --          dy(y)/dt &= x
 -- \end{aligned}
 -- \]
