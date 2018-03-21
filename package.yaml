@@ -49,3 +49,12 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - dde
+
+benchmarks:
+  dde-bench:
+    main: Bench.hs
+    source-dirs:
+    - bench
+    - dde
+    dependencies:
+    - criterion
