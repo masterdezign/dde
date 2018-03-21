@@ -2,7 +2,7 @@
   = Delay differential equations (DDE)
 
 
-  == Example: Ikeda DDE (TODO: update)
+  == Example: Ikeda DDE
 
   Below is a complete example simulating the Ikeda DDE defined as:
   @tau * x(t)/dt = -x + beta * sin[x(t - tau_D)]@.
