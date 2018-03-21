@@ -19,7 +19,7 @@ mgModel hStep totalIters = r
   where
     -- Initial state x(t0) = 0.2
     state0 = V1 0.2
-    len1 = 17 * (round $ recip hStep)  -- tauD = 17, delay time
+    len1 = 17 * round (recip hStep)  -- tauD = 17, delay time
     -- Initial conditions
     hist0 = V.replicate len1 state0
     inp = Input (V.replicate (totalIters + 1) 0.0)

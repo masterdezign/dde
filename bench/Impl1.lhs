@@ -64,11 +64,11 @@ total is the total number of iterations;
 >       return (xy', V.slice (len1 + total - krecord) krecord trace)
 > 
 >     -- Copy initial conditions
->     copyHist !v !hist = do
->       mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..(V.length hist) - 1]
+>     copyHist !v !hist =
+>       mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..V.length hist - 1]
 > 
 >     go !v !i !xy
->       | i == len1 + total = do
+>       | i == len1 + total =
 >           return xy
 >       | otherwise = do
 >         x_tau1 <- VM.unsafeRead v (i - len1)  -- Delayed element
@@ -114,7 +114,7 @@ The Mackey-Glass model.
 
 > mackeyGlass
 >   :: Floating a => Parameters a -> ((Sample a, a) -> Sample a)
-> mackeyGlass p (!(V1.V1 x), !x_tau1) = V1.V1 x'
+> mackeyGlass p (V1.V1 !x, !x_tau1) = V1.V1 x'
 >   where
 >     ! x' = beta * x_tau1 / (1 + x_tau1^10) - gamma * x
 >     beta = pBeta p
@@ -134,17 +134,17 @@ Fourth-order Runge-Kutta for a 1D system with a single delay $\tau_1$.
 > rk4 :: Double
 >   -> ((Sample Double, Double) -> Sample Double)
 >   -> Sample Double -> (Double, Double) -> Sample Double
-> rk4 hStep sys !xy !(!x_tau1, !x_tau1') = xy_next
+> rk4 hStep sys !xy (!x_tau1, !x_tau1') = xy_next
 >   where
 >     xy_next = xy + over6 * (a + x2 * b + x2 * c + d)
 >     over6 = V1.V1 (recip 6)
 >     over2 = V1.V1 (recip 2)
 >     x2 = V1.V1 2
 >     h = V1.V1 hStep
->     ! a = h * (sys (xy, x_tau1))
->     ! b = h * (sys (xy + over2 * a, x_tau1_b))
->     ! c = h * (sys (xy + over2 * b, x_tau1_c))
->     ! d = h * (sys (xy + c, x_tau1'))
+>     ! a = h * sys (xy, x_tau1)
+>     ! b = h * sys (xy + over2 * a, x_tau1_b)
+>     ! c = h * sys (xy + over2 * b, x_tau1_c)
+>     ! d = h * sys (xy + c, x_tau1')
 >     ! x_tau1_b = (x_tau1 + x_tau1') / 2
 >     ! x_tau1_c = x_tau1_b
 
@@ -180,7 +180,7 @@ Define a Mackey-Glass simulation, the final state is the result
 > mgModel :: Double -> Int -> Double
 > mgModel hStep total = s
 >   where
->     len1 = 17 * (round $ recip hStep)  -- tauD = 17, delay time
+>     len1 = 17 * round (recip hStep)  -- tauD = 17, delay time
 >
 >     icond0 = V.fromList $ initCondConst len1 0.2
 >

@@ -51,7 +51,7 @@ data BandpassFiltering = BandpassFiltering
 mackeyGlassRhs :: MackeyGlass -> RHS (Linear.V1.V1 Double)
 mackeyGlassRhs MackeyGlass { _beta = beta, _gamma = gamma } = RHS _f
   where
-    _f (xs, (Hist hs), _) = Linear.V1.V1 x'
+    _f (xs, Hist hs, _) = Linear.V1.V1 x'
       where
         x' = beta * x_tau / (1 + x_tau^(10::Int)) - gamma * x
         x = xs ^._x
@@ -64,9 +64,9 @@ bandpassRhs RC { _fnl = _fnl,
                  _filt = BandpassFiltering { _tau = tau, _theta = theta }
                } = RHS _f
  where
-   _f (xs, (Hist hs), (Inp u)) = Linear.V2.V2 x' y'
+   _f (xs, Hist hs, Inp u) = Linear.V2.V2 x' y'
      where
-       x' = (-x - (recip theta) * y + _fnl (x_tau + _rho * u)) / tau
+       x' = (-x - y / theta + _fnl (x_tau + _rho * u)) / tau
        y' = x  -- Integral term
 
        x = xs ^._x

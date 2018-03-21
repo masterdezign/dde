@@ -86,13 +86,13 @@ import           Numeric.DDE.Types
 rk4 :: Stepper
 rk4 = Stepper _rk4
   where
-    _rk4 dt (RHS rhs') !xy !((Hist !xy_tau1), (Hist !xy_tau1')) !(!u1, !u1') = xy_next
+    _rk4 dt (RHS rhs') !xy (Hist !xy_tau1, Hist !xy_tau1') (!u1, !u1') = xy_next
       where
         xy_next = xy ^+^ (a ^+^ 2 *^ b ^+^ 2 *^ c ^+^ d) ^/ 6
-        a = dt *^ (rhs' (xy, Hist xy_tau1, inp1))
-        b = dt *^ (rhs' (xy ^+^ a ^/ 2, Hist xy_tau1_b, inp1_b))
-        c = dt *^ (rhs' (xy ^+^ b ^/ 2, Hist xy_tau1_c, inp1_c))
-        d = dt *^ (rhs' (xy ^+^ c, Hist xy_tau1', inp1'))
+        a = dt *^ rhs' (xy, Hist xy_tau1, inp1)
+        b = dt *^ rhs' (xy ^+^ a ^/ 2, Hist xy_tau1_b, inp1_b)
+        c = dt *^ rhs' (xy ^+^ b ^/ 2, Hist xy_tau1_c, inp1_c)
+        d = dt *^ rhs' (xy ^+^ c, Hist xy_tau1', inp1')
         xy_tau1_b = (xy_tau1 ^+^ xy_tau1') ^/ 2
         xy_tau1_c = xy_tau1_b
         inp1 = Inp u1
@@ -104,7 +104,7 @@ rk4 = Stepper _rk4
 heun2 :: Stepper
 heun2 = Stepper _heun2
   where
-    _heun2 hStep (RHS rhs') !xy !(!xy_tau1, !xy_tau1') !(!u1, !u1') = xy_next
+    _heun2 hStep (RHS rhs') !xy (!xy_tau1, !xy_tau1') (!u1, !u1') = xy_next
       where
         f1 = rhs' (xy, xy_tau1, Inp u1)
         xy_ = xy ^+^ hStep *^ f1
@@ -129,7 +129,7 @@ integ'
   -> (state, V.Vector state)
   -- ^ Final state and recorded state of the first variable.
   -- The latter is a vector of vectors (matrix) when multiple variables are involved.
-integ' iter1 len1 krecord total (!xy0, !hist0, !(Input in1)) = a
+integ' iter1 len1 krecord total (!xy0, !hist0, Input !in1) = a
   where
     a = unsafePerformIO $ do
       ! v <- VM.new (len1 + total)  -- Delay history
@@ -143,11 +143,11 @@ integ' iter1 len1 krecord total (!xy0, !hist0, !(Input in1)) = a
       return (xy', V.slice (len1 + total - krecord) krecord trace)
 
     -- Copy initial conditions
-    copyHist !v !hist = do
-      mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..(V.length hist) - 1]
+    copyHist !v !hist =
+      mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..V.length hist - 1]
 
     go !v !i !xy
-      | i == len1 + total = do
+      | i == len1 + total =
           return xy
       | otherwise = do
         xy_tau1 <- VM.unsafeRead v (i - len1)  -- Two subsequent delayed states
