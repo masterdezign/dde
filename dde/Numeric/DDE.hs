@@ -7,32 +7,31 @@
   Below is a complete example simulating the Ikeda DDE defined as:
   @tau * x(t)/dt = -x + beta * sin[x(t - tau_D)]@.
 
+  > import           Linear ( V1 (..) )
   > import qualified Data.Vector.Storable as V
   > import qualified Numeric.DDE as DDE
   >
-  > ikedaRhs beta ((DDE.State xs), (DDE.Hist hs), _) = DDE.State $ V.fromList [x']
+  > ikedaRhs beta = DDE.RHS derivative
   >   where
-  >     -- Ikeda DDE definition
-  >     x' = (-x + beta * (sin x_tauD)) / tau
+  >     derivative ((V1 x), (DDE.Hist (V1 x_tauD)), _) = V1 x'
+  >       where
+  >         -- Ikeda DDE definition
+  >         x' = (-x + beta * (sin x_tauD)) / tau
   >
-  >     -- Constants
-  >     tau = 0.01
+  >         -- Constants
+  >         tau = 0.01
   >
-  >     -- Dynamical variable x(t)
-  >     x = V.head xs
-  >
-  >     -- Delay term x(t - tau_D)
-  >     x_tauD = V.head hs
-  >
-  > model beta hStep len1 totalIter = DDE.integ DDE.rk4 state0 hist0 len1 hStep (ikedaRhs beta) inp
+  > model beta hStep len1 totalIter = (state1, V.map (\(V1 x) -> x) trace)
   >   where
   >     -- Initial conditions:
   >     -- dynamical state and delay history.
-  >     state0 = DDE.State $ V.fromList [pi/2]
-  >     hist0 = V.replicate len1 (pi/2)
+  >     state0 = V1 (pi/2)
+  >     hist0 = V.replicate len1 state0
   >
   >     -- Input is ignored in ikedaRhs
   >     inp = DDE.Input $ V.replicate (totalIter + 1) 0
+  >
+  >     (state1, trace) = DDE.integ DDE.rk4 state0 hist0 len1 hStep (ikedaRhs beta) inp
   >
   > -- Control parameter
   > beta = 2.6
@@ -67,6 +66,7 @@ module Numeric.DDE (
   , HistorySnapshot (..)
 
   -- * Steppers
+  , RHS (..)
   , Stepper (..)
   , rk4
   , heun2
