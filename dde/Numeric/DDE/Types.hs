@@ -33,21 +33,26 @@ newtype Input = Input { _input :: V.Vector Double }
 -- There could be several delay variables
 newtype HistorySnapshot state = Hist { _histsnap :: state }
 
--- | DDE stepper (all delays are equal)
+-- | DDE stepper (all delays are equal).
+--
+-- Stepper is a function of the following arguments:
+--
+-- * Integration step
+-- * DDE right-hand side
+-- * Current state vector @(x(t), y(t), ...)@
+-- * Two subsequent history snapshots
+-- * Two subsequent inputs
+--
+-- The result (step) is a new state vector.
 newtype Stepper = Stepper {
   _step
     :: forall state. ( Functor state, Free.VectorSpace (state Double)
                      , Num (Free.Scalar (state Double)) )
      => Free.Scalar (state Double)
-     -- ^ Integration step
      -> RHS (state Double)
-     -- ^ DDE right-hand side
      -> state Double
-     -- ^ Current state vector
      -> (HistorySnapshot (state Double), HistorySnapshot (state Double))
-     -- ^ Two subsequent history snapshots
      -> (Double, Double)
-     -- ^ Two subsequent inputs
      -> state Double
   }
 -- NB: to allow multiple delay times, instead of
