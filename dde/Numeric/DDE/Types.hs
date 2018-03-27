@@ -44,9 +44,8 @@ newtype HistorySnapshot state = Hist { _histsnap :: state }
 -- * Two subsequent inputs
 --
 -- The result (step) is a new state vector.
-newtype Stepper = Stepper {
-  _step
-    :: forall state. ( Functor state, Free.VectorSpace (state Double)
+type Stepper = 
+       forall state. ( Functor state, Free.VectorSpace (state Double)
                      , Num (Free.Scalar (state Double)) )
      => Free.Scalar (state Double)
      -> RHS (state Double)
@@ -54,7 +53,6 @@ newtype Stepper = Stepper {
      -> (HistorySnapshot (state Double), HistorySnapshot (state Double))
      -> (Double, Double)
      -> state Double
-  }
 -- NB: to allow multiple delay times, instead of
 -- (HistorySnapshot state, HistorySnapshot state)
 -- there should be

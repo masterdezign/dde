@@ -51,6 +51,7 @@
 
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 module Numeric.DDE (
@@ -84,9 +85,7 @@ import           Numeric.DDE.Types
 
 -- | Fourth order Runge-Kutta stepper
 rk4 :: Stepper
-rk4 = Stepper _rk4
-  where
-    _rk4 dt (RHS rhs') !xy (Hist !xy_tau1, Hist !xy_tau1') (!u1, !u1') = xy_next
+rk4 dt (RHS rhs') !xy (Hist !xy_tau1, Hist !xy_tau1') (!u1, !u1') = xy_next
       where
         xy_next = xy ^+^ (a ^+^ 2 *^ b ^+^ 2 *^ c ^+^ d) ^/ 6
         a = dt *^ rhs' (xy, Hist xy_tau1, inp1)
@@ -102,9 +101,7 @@ rk4 = Stepper _rk4
 
 -- | Second order Heun's stepper
 heun2 :: Stepper
-heun2 = Stepper _heun2
-  where
-    _heun2 hStep (RHS rhs') !xy (!xy_tau1, !xy_tau1') (!u1, !u1') = xy_next
+heun2 hStep (RHS rhs') !xy (!xy_tau1, !xy_tau1') (!u1, !u1') = xy_next
       where
         f1 = rhs' (xy, xy_tau1, Inp u1)
         xy_ = xy ^+^ hStep *^ f1
@@ -170,7 +167,7 @@ integ
   -> RHS (state Double)  -- ^ Derivative (DDE right-hand side)
   -> Input  -- ^ External forcing
   -> (state Double, V.Vector (state Double))
-integ (Stepper stp) state0 hist0 len1 dt rhs' inp@(Input in1) = r
+integ stp state0 hist0 len1 dt rhs' inp@(Input in1) = r
   where
     -- Two subsequent inputs are needed for `rk4` and `heun2`,
     -- therefore subtract one
