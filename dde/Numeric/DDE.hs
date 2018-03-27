@@ -107,6 +107,7 @@ heun2 hStep (RHS rhs') xy (xy_tau1, xy_tau1') (u1, u1') = xy_next
         xy_ = xy ^+^ hStep *^ f1
         f2 = rhs' (xy_, xy_tau1', Inp u1')
         xy_next = xy ^+^ (hStep *^ (f1 ^+^ f2)) ^/ 2.0
+{-# INLINE heun2 #-}
 
 -- | Generic integrator for DDEs (single delay time).
 -- Records all dynamical variables.
@@ -154,6 +155,7 @@ integ' iter1 len1 krecord total (xy0, hist0, Input in1) = a
             xy' = iter1 xy (Hist xy_tau1, Hist xy_tau1') (u1, u1')
         VM.unsafeWrite v i xy'
         go v (i + 1) xy'
+{-# INLINE integ' #-}
 
 -- | Generic integrator that records the whole time trace @x(t)@
 -- (single delay time).
@@ -175,6 +177,7 @@ integ stp state0 hist0 len1 dt rhs' inp@(Input in1) = r
     iterator = stp dt rhs'
     -- Record all the time trace
     r = integ' iterator len1 totalIters totalIters (state0, hist0, inp)
+{-# INLINE integ #-}
 
 -- | RK4 integrator shortcut for 1D DDEs with zero
 -- initial conditions
