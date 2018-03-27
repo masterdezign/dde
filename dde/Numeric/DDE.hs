@@ -85,7 +85,7 @@ import           Numeric.DDE.Types
 
 -- | Fourth order Runge-Kutta stepper
 rk4 :: Stepper
-rk4 dt (RHS rhs') !xy (Hist !xy_tau1, Hist !xy_tau1') (!u1, !u1') = xy_next
+rk4 dt (RHS rhs') xy (Hist xy_tau1, Hist xy_tau1') (u1, u1') = xy_next
       where
         xy_next = xy ^+^ (a ^+^ 2 *^ b ^+^ 2 *^ c ^+^ d) ^/ 6
         a = dt *^ rhs' (xy, Hist xy_tau1, inp1)
@@ -101,7 +101,7 @@ rk4 dt (RHS rhs') !xy (Hist !xy_tau1, Hist !xy_tau1') (!u1, !u1') = xy_next
 
 -- | Second order Heun's stepper
 heun2 :: Stepper
-heun2 hStep (RHS rhs') !xy (!xy_tau1, !xy_tau1') (!u1, !u1') = xy_next
+heun2 hStep (RHS rhs') xy (xy_tau1, xy_tau1') (u1, u1') = xy_next
       where
         f1 = rhs' (xy, xy_tau1, Inp u1)
         xy_ = xy ^+^ hStep *^ f1
@@ -126,10 +126,10 @@ integ'
   -> (state, V.Vector state)
   -- ^ Final state and recorded state of the first variable.
   -- The latter is a vector of vectors (matrix) when multiple variables are involved.
-integ' iter1 len1 krecord total (!xy0, !hist0, Input !in1) = a
+integ' iter1 len1 krecord total (xy0, hist0, Input in1) = a
   where
     a = unsafePerformIO $ do
-      ! v <- VM.new (len1 + total)  -- Delay history
+      v <- VM.new (len1 + total)  -- Delay history
       -- Copy the initial history values
       copyHist v hist0
 
@@ -140,7 +140,7 @@ integ' iter1 len1 krecord total (!xy0, !hist0, Input !in1) = a
       return (xy', V.slice (len1 + total - krecord) krecord trace)
 
     -- Copy initial conditions
-    copyHist !v !hist =
+    copyHist v hist =
       mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..V.length hist - 1]
 
     go !v !i !xy
@@ -151,7 +151,7 @@ integ' iter1 len1 krecord total (!xy0, !hist0, Input !in1) = a
         xy_tau1' <- VM.unsafeRead v (i - len1 + 1)
         let u1 = in1 V.! (i - len1)  -- Two subsequent inputs
             u1' = in1 V.! (i - len1 + 1)
-            !xy' = iter1 xy (Hist xy_tau1, Hist xy_tau1') (u1, u1')
+            xy' = iter1 xy (Hist xy_tau1, Hist xy_tau1') (u1, u1')
         VM.unsafeWrite v i xy'
         go v (i + 1) xy'
 
@@ -171,10 +171,10 @@ integ stp state0 hist0 len1 dt rhs' inp@(Input in1) = r
   where
     -- Two subsequent inputs are needed for `rk4` and `heun2`,
     -- therefore subtract one
-    ! totalIters = V.length in1 - 1
-    ! iterator = stp dt rhs'
+    totalIters = V.length in1 - 1
+    iterator = stp dt rhs'
     -- Record all the time trace
-    ! r = integ' iterator len1 totalIters totalIters (state0, hist0, inp)
+    r = integ' iterator len1 totalIters totalIters (state0, hist0, inp)
 
 -- | RK4 integrator shortcut for 1D DDEs with zero
 -- initial conditions
