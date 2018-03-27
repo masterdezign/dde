@@ -20,7 +20,7 @@ import qualified Data.Vector.Storable as V
 -- i.e. it can be a vector of any length (x(t), y(t), ...).
 newtype RHS state = RHS {
   _state
-    :: Free.VectorSpace state => (state, HistorySnapshot state, InputSnapshot) -> state
+    :: (state, HistorySnapshot state, InputSnapshot) -> state
   }
 
 -- | Input u(t) is one-dimensional
