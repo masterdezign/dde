@@ -32,7 +32,7 @@ runTest3 inp =
 runTest4 :: V.Vector Double -> Double
 runTest4 inp =
   let hStep = recip 256.0
-      delaySamples = 800
+      delaySamples = 100
       V2 r _ = V.last $ R2.model hStep delaySamples inp
   in r
 
@@ -46,7 +46,7 @@ main = defaultMain [
   where
     maxTime = 1000  -- 1000 time units
 
-    total = round(maxTime * 256)
+    total = round(20 * maxTime * 256)
     inp = V.fromList $ map (sin. (0.001*pi*). fromIntegral) [1..total]
 
 -- benchmarking hard coded version
@@ -63,15 +63,14 @@ main = defaultMain [
 -- std dev              163.7 μs   (112.2 μs .. 262.5 μs)
 --
 -- benchmarking hard coded version (2D case with external forcing)
--- time                 3.644 ms   (3.595 ms .. 3.697 ms)
---                      0.999 R²   (0.998 R² .. 0.999 R²)
--- mean                 3.677 ms   (3.645 ms .. 3.715 ms)
--- std dev              106.5 μs   (86.91 μs .. 130.9 μs)
--- variance introduced by outliers: 12% (moderately inflated)
+-- time                 73.81 ms   (71.72 ms .. 74.75 ms)
+--                      0.999 R²   (0.996 R² .. 1.000 R²)
+-- mean                 74.67 ms   (73.78 ms .. 76.50 ms)
+-- std dev              2.075 ms   (849.9 μs .. 3.039 ms)
 --
 -- benchmarking dde library version (2D case with external forcing)
--- time                 6.118 ms   (6.026 ms .. 6.200 ms)
---                      0.999 R²   (0.998 R² .. 0.999 R²)
--- mean                 6.241 ms   (6.186 ms .. 6.336 ms)
--- std dev              201.6 μs   (150.1 μs .. 275.6 μs)
--- variance introduced by outliers: 13% (moderately inflated)
+-- time                 101.6 ms   (97.54 ms .. 105.1 ms)
+--                      0.998 R²   (0.995 R² .. 1.000 R²)
+-- mean                 105.5 ms   (103.0 ms .. 112.2 ms)
+-- std dev              6.021 ms   (1.470 ms .. 9.635 ms)
+-- variance introduced by outliers: 10% (moderately inflated)
