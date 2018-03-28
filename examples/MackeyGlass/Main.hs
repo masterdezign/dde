@@ -25,8 +25,7 @@ mgModel hStep totalIters = r
     inp = Input (V.replicate (totalIters + 1) 0.0)
     rhs' = mackeyGlassRhs parMG0
     -- Stepper implements Runge-Kutta schema
-    stepper = let (Stepper _rk4) = rk4
-              in _rk4 hStep rhs'
+    stepper = rk4 hStep rhs'
     -- Record all the time trace
     (_, r) = integ' stepper len1 totalIters totalIters (state0, hist0, inp)
 
