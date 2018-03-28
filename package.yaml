@@ -58,4 +58,3 @@ benchmarks:
     - dde
     dependencies:
     - criterion
-    - primitive
