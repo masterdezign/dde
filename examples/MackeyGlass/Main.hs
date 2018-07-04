@@ -26,8 +26,12 @@ mgModel hStep totalIters = r
     rhs' = mackeyGlassRhs parMG0
     -- Stepper implements Runge-Kutta schema
     stepper = rk4 hStep rhs'
+
+    -- A single delay
+    delaysInSamples = [len1]
+
     -- Record all the time trace
-    (_, r) = integ' stepper len1 totalIters totalIters (state0, hist0, inp)
+    (_, r) = integ' stepper delaysInSamples totalIters totalIters (state0, hist0, inp)
 
 -- | Comparison with the output.dat produced by:
 -- > $ xppaut -silent mg.ode

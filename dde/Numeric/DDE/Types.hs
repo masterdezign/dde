@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Numeric.DDE.Types (
     RHS (..)
-  , HistorySnapshot (..)
+  , HistorySnapshots (..)
   , Input (..)
   , InputSnapshot (..)
   , Stepper (..)
@@ -20,7 +20,7 @@ import qualified Data.Vector.Storable as V
 -- i.e. it can be a vector of any length (x(t), y(t), ...).
 newtype RHS state = RHS {
   _state
-    :: (state, HistorySnapshot state, InputSnapshot) -> state
+    :: (state, HistorySnapshots state, InputSnapshot) -> state
   }
 
 -- | Input u(t) is one-dimensional
@@ -29,32 +29,26 @@ newtype InputSnapshot = Inp { _insnap :: Double }
 -- | Vector of input data points
 newtype Input = Input { _input :: V.Vector Double }
 
--- | Contains only the required snapshot of history to make steppers (e.g. Heun) work.
--- There could be several delay variables
-newtype HistorySnapshot state = Hist { _histsnap :: state }
+-- | Contains state snapshots corresponding to each required delay length
+newtype HistorySnapshots state = Hist { _histsnaps :: [state] }
 
--- | DDE stepper (all delays are equal).
+-- | DDE stepper
 --
 -- Stepper is a function of the following arguments:
 --
 -- * Integration step
 -- * DDE right-hand side
 -- * Current state vector @(x(t), y(t), ...)@
--- * Two subsequent history snapshots
+-- * Two subsequent history snapshot lists
 -- * Two subsequent inputs
 --
 -- The result (step) is a new state vector.
-type Stepper = 
+type Stepper =
        forall state. ( Functor state, Free.VectorSpace (state Double)
                      , Num (Free.Scalar (state Double)) )
      => Free.Scalar (state Double)
      -> RHS (state Double)
      -> state Double
-     -> (HistorySnapshot (state Double), HistorySnapshot (state Double))
+     -> (HistorySnapshots (state Double), HistorySnapshots (state Double))
      -> (Double, Double)
      -> state Double
--- NB: to allow multiple delay times, instead of
--- (HistorySnapshot state, HistorySnapshot state)
--- there should be
--- (HistorySnapshot delaystate, HistorySnapshot delaystate).
--- i.e. a vector of required delayed values (e.g. x(t-tau1), x(t-tau2), y(t-tau3))

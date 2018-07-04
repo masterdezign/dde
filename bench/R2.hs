@@ -8,12 +8,15 @@ import qualified Numeric.DDE as DDE
 rhs :: DDE.RHS (V2 Double)
 rhs = DDE.RHS deriv
   where
-    deriv (V2 !x !y, DDE.Hist (V2 !x_tau _), DDE.Inp !inp) = V2 x' y'
+    deriv (V2 !x !y, DDE.Hist snapshots, DDE.Inp !inp) = V2 x' y'
       where
         tau = 2.15625
         delta = -3.0
 
         f x = if x < 0 then -x else 0
+
+        -- Delay term
+        V2 !x_tau _ = head snapshots
 
         x' = (-x - delta * y + f (x_tau + inp)) / tau
         y' = x
@@ -29,7 +32,7 @@ model' dt len1 inp = res
 
     inp' = DDE.Input inp
 
-    res = DDE.integ DDE.heun2 state0 hist0 len1 dt rhs inp'
+    res = DDE.integ DDE.heun2 state0 hist0 [len1] dt rhs inp'
 
 model :: Double -> Int -> V.Vector Double -> V.Vector (V2 Double)
 model dt delaySamples inp =

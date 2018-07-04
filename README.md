@@ -2,7 +2,7 @@
 
 ## Features
 
-* Autonomous DDEs with multiple dynamical variables and a single delay time (pull requests are welcome)
+* Autonomous DDEs with multiple dynamical variables and multiple delay times
 * Driven systems (i.e. with external input)
 * Non-autonomous DDEs (using driven systems with time as external input)
 * Second and fourth order integration methods
