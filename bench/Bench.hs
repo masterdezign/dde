@@ -49,29 +49,28 @@ main = defaultMain [
     total = round(maxTime * 256)
     inp = V.fromList $ map (sin. (0.001*pi*). fromIntegral) [1..total]
 
--- benchmarking hard coded version
--- time                 6.546 ms   (6.471 ms .. 6.627 ms)
---                      0.998 R²   (0.996 R² .. 0.999 R²)
--- mean                 6.755 ms   (6.673 ms .. 6.871 ms)
--- std dev              272.1 μs   (193.4 μs .. 376.0 μs)
--- variance introduced by outliers: 18% (moderately inflated)
+
+-- Benchmark was run on Dell Precision T3610
 --
+-- time                 6.377 ms   (6.326 ms .. 6.430 ms)
+--                      0.999 R²   (0.999 R² .. 1.000 R²)
+-- mean                 6.433 ms   (6.397 ms .. 6.481 ms)
+-- std dev              125.5 μs   (88.80 μs .. 170.0 μs)
+
 -- benchmarking dde library version
--- time                 6.860 ms   (6.786 ms .. 6.935 ms)
---                      0.998 R²   (0.996 R² .. 1.000 R²)
--- mean                 6.843 ms   (6.796 ms .. 6.917 ms)
--- std dev              163.7 μs   (112.2 μs .. 262.5 μs)
---
+-- time                 6.570 ms   (6.559 ms .. 6.581 ms)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 6.549 ms   (6.538 ms .. 6.557 ms)
+-- std dev              26.70 μs   (22.69 μs .. 31.91 μs)
+
 -- benchmarking hard coded version (2D case with external forcing)
--- time                 3.644 ms   (3.595 ms .. 3.697 ms)
---                      0.999 R²   (0.998 R² .. 0.999 R²)
--- mean                 3.677 ms   (3.645 ms .. 3.715 ms)
--- std dev              106.5 μs   (86.91 μs .. 130.9 μs)
--- variance introduced by outliers: 12% (moderately inflated)
---
+-- time                 3.641 ms   (3.604 ms .. 3.695 ms)
+--                      0.998 R²   (0.996 R² .. 1.000 R²)
+-- mean                 3.659 ms   (3.640 ms .. 3.693 ms)
+-- std dev              74.47 μs   (49.20 μs .. 124.5 μs)
+
 -- benchmarking dde library version (2D case with external forcing)
--- time                 6.118 ms   (6.026 ms .. 6.200 ms)
---                      0.999 R²   (0.998 R² .. 0.999 R²)
--- mean                 6.241 ms   (6.186 ms .. 6.336 ms)
--- std dev              201.6 μs   (150.1 μs .. 275.6 μs)
--- variance introduced by outliers: 13% (moderately inflated)
+-- time                 5.964 ms   (5.839 ms .. 6.067 ms)
+--                      0.998 R²   (0.997 R² .. 0.999 R²)
+-- mean                 5.958 ms   (5.928 ms .. 5.989 ms)
+-- std dev              96.24 μs   (73.59 μs .. 144.5 μs)

@@ -26,4 +26,4 @@ mgModel hStep totalIters = r
     -- Stepper implements Runge-Kutta schema
     stepper = rk4 hStep rhs'
     -- Provide the last state and the time trace
-    r = integ' stepper len1 totalIters totalIters (state0, hist0, inp)
+    r = integ' stepper [len1] totalIters totalIters (state0, hist0, inp)
