@@ -13,10 +13,13 @@
   >
   > ikedaRhs beta = DDE.RHS derivative
   >   where
-  >     derivative ((V1 x), (DDE.Hist (V1 x_tauD)), _) = V1 x'
+  >     derivative ((V1 x), (DDE.Hist histSnapshots), _) = V1 x'
   >       where
   >         -- Ikeda DDE definition
   >         x' = (-x + beta * (sin x_tauD)) / tau
+  >
+  >         -- There is only a single delay in our model
+  >         V1 x_tauD = head histSnapshots
   >
   >         -- Constants
   >         tau = 0.01
@@ -31,7 +34,9 @@
   >     -- Input is ignored in ikedaRhs
   >     inp = DDE.Input $ V.replicate (totalIter + 1) 0
   >
-  >     (state1, trace) = DDE.integ DDE.rk4 state0 hist0 len1 hStep (ikedaRhs beta) inp
+  >     -- Only one delay
+  >     delaysInSamples = [len1]
+  >     (state1, trace) = DDE.integ DDE.rk4 state0 hist0 delaysInSamples hStep (ikedaRhs beta) inp
   >
   > -- Control parameter
   > beta = 2.6
@@ -64,7 +69,7 @@ module Numeric.DDE (
   , integHeun2_2D
   , Input (..)
   , InputSnapshot (..)
-  , HistorySnapshot (..)
+  , HistorySnapshots (..)
 
   -- * Steppers
   , RHS (..)
@@ -92,7 +97,7 @@ rk4 dt (RHS rhs') xy (Hist xy_tau1, Hist xy_tau1') (u1, u1') = xy_next
         b = dt *^ rhs' (xy ^+^ a ^/ 2, Hist xy_tau1_b, inp1_b)
         c = dt *^ rhs' (xy ^+^ b ^/ 2, Hist xy_tau1_c, inp1_c)
         d = dt *^ rhs' (xy ^+^ c, Hist xy_tau1', inp1')
-        xy_tau1_b = (xy_tau1 ^+^ xy_tau1') ^/ 2
+        xy_tau1_b = zipWith (\xp xq -> (xp ^+^ xq) ^/ 2) xy_tau1 xy_tau1'
         xy_tau1_c = xy_tau1_b
         inp1 = Inp u1
         inp1_b = Inp $ (u1 + u1') / 2
@@ -109,15 +114,14 @@ heun2 hStep (RHS rhs') xy (xy_tau1, xy_tau1') (u1, u1') = xy_next
         xy_next = xy ^+^ (hStep *^ (f1 ^+^ f2)) ^/ 2.0
 {-# INLINE heun2 #-}
 
--- | Generic integrator for DDEs (single delay time).
+-- | Generic integrator for DDEs.
 -- Records all dynamical variables.
---
 integ'
   :: Storable state
-  => (state -> (HistorySnapshot state, HistorySnapshot state) -> (Double, Double) -> state)
+  => (state -> (HistorySnapshots state, HistorySnapshots state) -> (Double, Double) -> state)
   -- ^ Iterator describing a DDE system
-  -> Int
-  -- ^ Delay length in samples
+  -> [Int]
+  -- ^ Delay lengths in samples
   -> Int
   -- ^ Number of last samples to record
   -> Int
@@ -127,9 +131,13 @@ integ'
   -> (state, V.Vector state)
   -- ^ Final state and recorded state of the first variable.
   -- The latter is a vector of vectors (matrix) when multiple variables are involved.
-integ' iter1 len1 krecord total (xy0, hist0, Input in1) = a
+integ' iter lengths krecord total (xy0, hist0, Input in1) = a
   where
+    len1 = maximum lengths
+
     a = unsafePerformIO $ do
+      -- The longest delay (in samples)
+
       v <- VM.new (len1 + total)  -- Delay history
       -- Copy the initial history values
       copyHist v hist0
@@ -141,6 +149,7 @@ integ' iter1 len1 krecord total (xy0, hist0, Input in1) = a
       return (xy', V.slice (len1 + total - krecord) krecord trace)
 
     -- Copy initial conditions
+    -- It should be asserted that V.length hist >= len1
     copyHist v hist =
       mapM_ (\i -> VM.unsafeWrite v i (hist V.! i)) [0..V.length hist - 1]
 
@@ -148,23 +157,24 @@ integ' iter1 len1 krecord total (xy0, hist0, Input in1) = a
       | i == len1 + total =
           return xy
       | otherwise = do
-        xy_tau1 <- VM.unsafeRead v (i - len1)  -- Two subsequent delayed states
-        xy_tau1' <- VM.unsafeRead v (i - len1 + 1)
-        let u1 = in1 V.! (i - len1)  -- Two subsequent inputs
+        xy_tau1 <- mapM (\len -> VM.unsafeRead v (i - len)) lengths
+        -- Note that xy_tau1 are delayed by one (discrete sample) values from xy_tau1'.
+        -- Perhaps, memory access could be somehow optimized.
+        xy_tau1' <- mapM (\len -> VM.unsafeRead v (i - len + 1)) lengths
+        let u1 = in1 V.! (i - len1)  -- Two subsequent scalar inputs
             u1' = in1 V.! (i - len1 + 1)
-            xy' = iter1 xy (Hist xy_tau1, Hist xy_tau1') (u1, u1')
+            xy' = iter xy (Hist xy_tau1, Hist xy_tau1') (u1, u1')
         VM.unsafeWrite v i xy'
         go v (i + 1) xy'
 {-# INLINE integ' #-}
 
--- | Generic integrator that records the whole time trace @x(t)@
--- (single delay time).
+-- | Generic integrator that records the whole time trace @x(t)@.
 integ
   :: (Functor state, Storable (state Double), VectorSpace (state Double), Num (Scalar (state Double)))
   => Stepper
   -> state Double  -- ^ Initial state vector (x(t), y(t),...)
   -> V.Vector (state Double)  -- ^ Initial history for delayed variables
-  -> Int  -- ^ Delay length in samples
+  -> [Int]  -- ^ Delay lengths in samples
   -> Scalar (state Double)  -- ^ Integration step
   -> RHS (state Double)  -- ^ Derivative (DDE right-hand side)
   -> Input  -- ^ External forcing
@@ -181,48 +191,52 @@ integ stp state0 hist0 len1 dt rhs' inp@(Input in1) = r
 
 -- | RK4 integrator shortcut for 1D DDEs with zero
 -- initial conditions
-integRk4 :: Int  -- ^ Delay length in samples
+integRk4 :: [Int]  -- ^ Delay lengths in samples
          -> Double  -- ^ Integration time step
          -> RHS (V1 Double)  -- ^ DDE model
          -> Input  -- ^ External forcing
          -> (V1 Double, V.Vector (V1 Double))
-integRk4 len1 = integ rk4 state0 hist0 len1
+integRk4 lengths = integ rk4 state0 hist0 lengths
   where
     state0 = V1 0.0
+    len1 = maximum lengths
     hist0 = V.replicate len1 state0
 
 -- | Shortcut for Heun's 2nd order 1D DDEs with zero
 -- initial conditions
-integHeun2 :: Int  -- ^ Delay length in samples
+integHeun2 :: [Int]  -- ^ Delay lengths in samples
            -> Double  -- ^ Integration time step
            -> RHS (V1 Double)  -- ^ DDE model
            -> Input  -- ^ External forcing
            -> (V1 Double, V.Vector (V1 Double))
-integHeun2 len1 = integ heun2 state0 hist0 len1
+integHeun2 lengths = integ heun2 state0 hist0 lengths
   where
     state0 = V1 0.0
+    len1 = maximum lengths
     hist0 = V.replicate len1 state0
 
 -- | RK4 integrator shortcut for 2D DDEs with zero
 -- initial conditions
-integRk4_2D :: Int  -- ^ Delay length in samples
+integRk4_2D :: [Int]  -- ^ Delay lengths in samples
             -> Double  -- ^ Integration time step
             -> RHS (V2 Double)  -- ^ DDE model
             -> Input  -- ^ External forcing
             -> (V2 Double, V.Vector (V2 Double))
-integRk4_2D len1 = integ rk4 state0 hist0 len1
+integRk4_2D lengths = integ rk4 state0 hist0 lengths
   where
     state0 = V2 0.0 0.0
+    len1 = maximum lengths
     hist0 = V.replicate len1 state0
 
 -- | Shortcut for Heun's 2nd order 2D DDEs with zero
 -- initial conditions
-integHeun2_2D :: Int  -- ^ Delay length in samples
+integHeun2_2D :: [Int]  -- ^ Delay length in samples
               -> Double  -- ^ Integration time step
               -> RHS (V2 Double)  -- ^ DDE model
               -> Input  -- ^ External forcing
               -> (V2 Double, V.Vector (V2 Double))
-integHeun2_2D len1 = integ heun2 state0 hist0 len1
+integHeun2_2D lengths = integ heun2 state0 hist0 lengths
   where
     state0 = V2 0.0 0.0
+    len1 = maximum lengths
     hist0 = V.replicate len1 state0
