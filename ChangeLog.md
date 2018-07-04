@@ -1,5 +1,8 @@
 # Changelog for dde
 
+## 0.3.0 *July 4th 2018*
+  * Support DDEs with multiple delay times
+
 ## 0.2.0 *March 28th 2018*
   * Improved speed for multidimensional DDEs
 
