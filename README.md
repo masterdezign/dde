@@ -9,6 +9,7 @@
 * Example models:
    * [Mackey-Glass](https://github.com/masterdezign/dde/blob/master/examples/MackeyGlass/Main.hs) with no external input
    * [Driven system](https://github.com/masterdezign/dde/blob/80de41dd8c04c18cf439dee33bc117c96c212699/dde/Numeric/DDE/Model.hs#L60)
+   * [Two delays](https://github.com/masterdezign/dde/blob/master/examples/Chimera/Main.hs)
 * Pure Haskell
 
 ## Acknowledgements
