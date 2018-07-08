@@ -20,7 +20,7 @@ description:         Please see the README on Github at <https://github.com/mast
 
 dependencies:
 - base >= 4.7 && < 5
-- free-vector-spaces
+- free-vector-spaces == 0.1.4.0
 - lens
 - linear
 - vector
