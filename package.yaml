@@ -45,6 +45,12 @@ executables:
     dependencies:
     - dde
 
+  lorenz:
+    main:                Main.hs
+    source-dirs:         examples/Lorenz
+    dependencies:
+    - dde
+
 tests:
   dde-test:
     main:                Spec.hs
