@@ -6,6 +6,11 @@
 -- to read the delayed value(s) and changing @delaysInSamples@
 -- constant in the `model` function to indicate the delay length.
 
+-- Exercise:
+-- Stabilize unstable periodic orbits.
+-- Ref. K. Pyragas, Phys. Lett. A 170, 421 (1992)
+-- http://pyragas.pfi.lt/pdffiles/1992/pla92.pdf
+
 import           Linear ( V3 (..) )  -- From `linear` package
 import qualified Data.Vector.Storable as V  -- From `vector` package
 import qualified Numeric.DDE as DDE  -- From `dde-0.3.0` package
